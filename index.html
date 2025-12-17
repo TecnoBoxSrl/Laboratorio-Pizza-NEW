@@ -3,44 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Laboratorio Pizza - CalcolaMix & Impasto</title>
+    <title>Laboratorio Pizza - Calcolatore Professionale</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Library for direct PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: #f1f1f1; }
-      ::-webkit-scrollbar-thumb { background: #d97706; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #b45309; }
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Lora:wght@700&display=swap');
+      
+      body { font-family: 'Inter', sans-serif; }
+      .font-serif { font-family: 'Lora', serif; }
 
       @media print {
         @page { size: A4; margin: 10mm; }
-        body { background: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .no-print, button, .tab-nav, .bg-stone-900\/60, .fixed { display: none !important; }
-        .max-w-lg { max-width: 100% !important; width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; }
-        .bg-white\/95 { background: white !important; backdrop-filter: none !important; }
-        input { border: none !important; background: transparent !important; padding: 2px !important; font-weight: bold !important; }
-        /* Ensure everything fits on one page */
-        .animate-fade-in { animation: none !important; }
-        h1, h2, h3 { color: black !important; }
-        .bg-amber-500, .bg-stone-800 { background-color: #f3f4f6 !important; color: black !important; border: 1px solid #ddd !important; }
-        .text-amber-600, .text-amber-400 { color: #b45309 !important; }
+        body { background: white !important; -webkit-print-color-adjust: exact !important; }
+        .no-print { display: none !important; }
+        #main-card { 
+          box-shadow: none !important; 
+          border: none !important; 
+          width: 100% !important; 
+          max-width: 100% !important; 
+          margin: 0 !important; 
+          padding: 0 !important;
+          background: white !important;
+        }
+        input { border: none !important; background: transparent !important; font-weight: bold !important; }
       }
 
-      /* PDF Generation specific tweaks to ensure it looks like a document */
-      .pdf-template { background: white !important; padding: 20px !important; color: black !important; }
+      /* Tweak for html2pdf to avoid clipping */
+      .pdf-content { background: white !important; width: 100% !important; }
     </style>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react": "https://esm.sh/react@19.2.3",
+    "react-dom": "https://esm.sh/react-dom@19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@19.2.3/client",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/"
   }
 }
 </script>
-</head>
-  <body class="bg-gray-50">
+  </head>
+  <body class="bg-stone-100">
     <div id="root"></div>
   </body>
 </html>

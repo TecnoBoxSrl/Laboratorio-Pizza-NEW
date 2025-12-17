@@ -1,110 +1,170 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 
-const InputField = ({ label, value, setter, unit, min, max, step = 1 }: any) => (
+const InputField = ({ label, value, setter, unit, min, max, subLabel }: any) => (
   <div className="space-y-1">
-    <label className="block text-[10px] font-bold text-stone-500 uppercase">{label}</label>
+    <label className="block text-[10px] font-black text-stone-500 uppercase tracking-tight">{label}</label>
     <div className="relative">
-      <input type="number" value={value} onChange={e => setter(e.target.value === '' ? '' : parseFloat(e.target.value))} className="w-full rounded-lg border-stone-300 py-2 pl-3 pr-8 text-sm font-bold focus:ring-amber-500" />
-      <span className="absolute right-2 top-2 text-[10px] text-stone-400 font-bold">{unit}</span>
+      <input 
+        type="number" 
+        value={value} 
+        onChange={e => setter(e.target.value === '' ? '' : parseFloat(e.target.value))} 
+        className="w-full rounded-xl border-stone-200 py-3 pl-4 pr-10 text-[15px] font-bold focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-white shadow-sm" 
+      />
+      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-stone-400 font-bold">{unit}</span>
     </div>
+    {subLabel && <div className="text-right text-[9px] text-stone-300 font-bold tracking-tighter">{subLabel}</div>}
   </div>
 );
 
-const ResultRow = ({ label, value, unit, color, highlight, subValue, subLabel }: any) => (
-  <div className={`${color} p-3 rounded-xl border border-stone-100 flex justify-between items-center`}>
-    <div className="flex flex-col"><span className="text-stone-600 font-bold text-[10px] uppercase">{label}</span>{subLabel && <span className="text-[8px] text-stone-400 font-medium">{subLabel}</span>}</div>
-    <div className="text-right"><span className={`font-mono font-bold text-stone-800 ${highlight ? 'text-amber-600' : ''} text-lg`}>{value} <span className="text-[10px] text-stone-400">{unit}</span></span>{subValue && <div className="text-[9px] text-stone-500 font-mono">o {subValue}g secco</div>}</div>
-  </div>
-);
+const IngredientRow = ({ label, value, unit, subValue, subLabel, isBlack }: any) => {
+  if (isBlack) {
+    return (
+      <div className="bg-[#1a1a1a] text-white p-5 rounded-2xl flex justify-between items-center shadow-lg my-2">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-black uppercase text-stone-400 leading-none mb-1">Farina Consigliata</span>
+          <span className="text-xl font-extrabold text-amber-500 leading-none">{label}</span>
+        </div>
+        <div className="text-right">
+          <span className="text-3xl font-black font-mono tracking-tighter">{value}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white p-4 rounded-2xl border border-stone-100 flex justify-between items-center shadow-sm mb-3">
+      <span className="text-stone-700 font-black text-[11px] uppercase tracking-tight">{label}</span>
+      <div className="text-right flex items-baseline gap-2">
+        <span className="font-mono font-black text-stone-800 text-2xl leading-none">{value}</span>
+        <span className="text-[11px] text-stone-400 font-bold uppercase">{unit}</span>
+        {subValue !== undefined && (
+          <div className="ml-4 pl-4 border-l border-stone-100 text-left">
+            <div className="text-[16px] font-black text-stone-800 leading-none">{subValue} <span className="text-[9px] text-stone-400">g</span></div>
+            <div className="text-[8px] text-stone-400 font-bold uppercase leading-none mt-1">{subLabel}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const PizzaCalculator: React.FC = () => {
+  const [isTeglia, setIsTeglia] = useState(false);
   const [numBalls, setNumBalls] = useState<number | string>(1);
   const [ballWeight, setBallWeight] = useState<number | string>(260);
   const [hydration, setHydration] = useState<number | string>(65);
-  const [saltPerLiter, setSaltPerLiter] = useState<number | string>(50);
+  const [saltLit, setSaltLit] = useState<number | string>(50);
+  const [fatLit, setFatLit] = useState<number | string>(0);
+  const [pdrPercent, setPdrPercent] = useState<number | string>(0);
   const [hoursTotal, setHoursTotal] = useState<number | string>(24);
   const [hoursFridge, setHoursFridge] = useState<number | string>(0);
   const [tempRoom, setTempRoom] = useState<number | string>(20);
-  const [fatPerLiter, setFatPerLiter] = useState<number | string>(0);
-  const [pdrPercent, setPdrPercent] = useState<number | string>(0);
-  const [isTeglia, setIsTeglia] = useState(false);
-  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [pdrType, setPdrType] = useState<'stanca' | 'normale' | 'vivace'>('normale');
 
-  const results = useMemo(() => {
-    const _num = Number(numBalls) || 0;
-    const _weight = Number(ballWeight) || 0;
-    const _hyd = Number(hydration) || 0;
-    const total = _num * _weight;
-    const hFactor = _hyd / 100;
-    const sFactor = (Number(saltPerLiter) / 1000) * hFactor;
-    const fFactor = (Number(fatPerLiter) / 1000) * hFactor;
-    const flour = total / (1 + hFactor + sFactor + fFactor);
-    const water = flour * hFactor;
-    const salt = (water / 1000) * Number(saltPerLiter);
-    const fat = (water / 1000) * Number(fatPerLiter);
-    const yeast = (flour * 2250) / (Math.pow(1.096, Number(tempRoom)) * (Number(hoursTotal) - Number(hoursFridge)/12) * 1000);
+  const res = useMemo(() => {
+    const _n = Number(numBalls) || 0, _w = Number(ballWeight) || 0, _h = Number(hydration) || 0;
+    const totalWeight = _n * _w;
     
-    let wRange = "W 260-300";
-    if (Number(hoursTotal) < 12) wRange = "W 180-220";
-    else if (Number(hoursTotal) > 48) wRange = "W 350+";
+    // Ingredients relative to water/flour
+    const hFactor = _h / 100;
+    const sFactor = (Number(saltLit) / 1000) * hFactor;
+    const fFactor = (Number(fatLit) / 1000) * hFactor;
+    const pdrFactor = (Number(pdrPercent) / 100);
 
-    return { flour: Math.round(flour), water: Math.round(water), salt: Math.round(salt * 10) / 10, fat: Math.round(fat), yeast: Math.round(yeast * 100) / 100, dryYeast: Math.round((yeast/3)*100)/100, wRange };
-  }, [numBalls, ballWeight, hydration, saltPerLiter, hoursTotal, hoursFridge, tempRoom, fatPerLiter]);
+    // Total = Flour + Water + Salt + Fat + PDR (pdr is % of flour usually, or % of total? Verace says % of flour)
+    // Actually common formula: Total = Flour * (1 + h + s + f + pdr)
+    const flour = totalWeight / (1 + hFactor + sFactor + fFactor + pdrFactor);
+    const water = flour * hFactor;
+    const saltG = (water / 1000) * Number(saltLit);
+    const yeast = (flour * 2250) / (Math.pow(1.096, Number(tempRoom)) * Math.max(Number(hoursTotal) - (Number(hoursFridge)*0.8), 1) * 1000);
+    
+    const prontoPer = new Date();
+    prontoPer.setHours(prontoPer.getHours() + Number(hoursTotal));
+    const formatDate = prontoPer.toLocaleString('it-IT', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-  const handlePdf = () => {
-    const element = document.getElementById('main-card');
-    // @ts-ignore
-    html2pdf().from(element).set({ margin: 10, filename: 'Ricetta_Pizza.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }).save();
-  };
+    let strength = "W 300 - 340";
+    let cat = "Molto Forte";
+    if (Number(hoursTotal) < 12) { strength = "W 180 - 220"; cat = "Debole"; }
+    else if (Number(hoursTotal) < 18) { strength = "W 230 - 270"; cat = "Media"; }
+    else if (Number(hoursTotal) > 36) { strength = "W 360+"; cat = "Estrapolita"; }
 
-  const shareWhatsApp = () => {
-    const text = `🍕 *Ricetta Pizza*\n🌾 Farina: ${results.flour}g\n🚰 Acqua: ${results.water}g\n🦠 Lievito: ${results.yeast}g\n🧂 Sale: ${results.salt}g\n💪 Forza: ${results.wRange}\n_Creato con Laboratorio Pizza_`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const shareTelegram = () => {
-    const text = `🍕 *Ricetta Pizza*\n🌾 Farina: ${results.flour}g\n🚰 Acqua: ${results.water}g\n🦠 Lievito: ${results.yeast}g\n🧂 Sale: ${results.salt}g\n💪 Forza: ${results.wRange}`;
-    window.open(`https://t.me/share/url?url=https://laboratoriopizza.it&text=${encodeURIComponent(text)}`, '_blank');
-  };
+    return { 
+      flour: Math.round(flour), 
+      water: Math.round(water), 
+      salt: Math.round(saltG), 
+      yeast: Math.round(yeast * 100) / 100,
+      dry: Math.round((yeast/3) * 100) / 100,
+      strength,
+      cat,
+      prontoPer: formatDate
+    };
+  }, [numBalls, ballWeight, hydration, saltLit, fatLit, pdrPercent, hoursTotal, hoursFridge, tempRoom]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center no-print">
-        <h2 className="text-stone-500 text-[10px] font-bold uppercase tracking-widest">Strumenti Ricetta</h2>
-        <div className="flex gap-2">
-          <button onClick={handlePdf} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-100" title="Salva PDF"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>
-          <div className="relative">
-            <button onClick={() => setShowShareMenu(!showShareMenu)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 border border-blue-100"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg></button>
-            {showShareMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-stone-100 z-50 overflow-hidden">
-                <button onClick={shareWhatsApp} className="w-full px-4 py-3 text-left text-sm font-bold text-green-600 hover:bg-green-50 flex items-center gap-3 border-b border-stone-50"><span>WhatsApp</span></button>
-                <button onClick={shareTelegram} className="w-full px-4 py-3 text-left text-sm font-bold text-sky-600 hover:bg-sky-50 flex items-center gap-3 border-b border-stone-50"><span>Telegram</span></button>
-              </div>
-            )}
-          </div>
-          <button onClick={() => window.print()} className="p-2 bg-stone-100 text-stone-600 rounded-lg hover:bg-stone-200"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg></button>
-        </div>
+    <div className="space-y-6">
+      {/* Teglia Toggle */}
+      <div className="bg-white p-4 rounded-2xl border border-stone-100 flex justify-between items-center shadow-sm no-print">
+        <span className="text-[12px] font-black text-stone-700 uppercase">Calcolatore Teglia</span>
+        <button 
+          onClick={() => setIsTeglia(!isTeglia)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isTeglia ? 'bg-amber-500' : 'bg-stone-200'}`}
+        >
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isTeglia ? 'translate-x-6' : 'translate-x-1'}`} />
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 no-print">
-        <InputField label="Num. Panielli" value={numBalls} setter={setNumBalls} unit="pz" />
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6 no-print">
+        <InputField label="Numero Panielli" value={numBalls} setter={setNumBalls} unit="pz" />
         <InputField label="Peso Paniello" value={ballWeight} setter={setBallWeight} unit="g" />
-        <InputField label="Idratazione" value={hydration} setter={setHydration} unit="%" />
-        <InputField label="Sale" value={saltPerLiter} setter={setSaltPerLiter} unit="g/L" />
-        <InputField label="Tempo Totale" value={hoursTotal} setter={setHoursTotal} unit="h" />
-        <InputField label="Temp. Ambiente" value={tempRoom} setter={setTempRoom} unit="°C" />
+        <InputField label="Idratazione" value={hydration} setter={setHydration} unit="%" subLabel="50 - 100" />
+        <InputField label="Sale (Su Litro)" value={saltLit} setter={setSaltLit} unit="g/L" subLabel="0 - 70" />
+        <InputField label="Olio/Grassi (Su Litro)" value={fatLit} setter={setFatLit} unit="g/L" subLabel="0 - 150" />
+        <InputField label="Pasta di riporto" value={pdrPercent} setter={setPdrPercent} unit="%" subLabel="0 - 83.06" />
+        <InputField label="Lievitazione Totale" value={hoursTotal} setter={setHoursTotal} unit="h" subLabel="3 - 96" />
+        {/* Fixed duplicate label attribute by keeping only the descriptive one */}
+        <InputField label="...di cui frigo" value={hoursFridge} setter={setHoursFridge} unit="h" subLabel="0 - 24" />
+        <div className="col-span-2">
+          <InputField label="Temperatura Ambiente" value={tempRoom} setter={setTempRoom} unit="°C" subLabel="15 - 35" />
+        </div>
       </div>
 
-      <div className="pt-4 border-t border-stone-100 space-y-2">
-        <div className="bg-stone-800 text-white p-3 rounded-xl flex justify-between items-center shadow-md">
-          <span className="text-[10px] font-bold uppercase text-stone-400">Farina Suggerita</span>
-          <span className="text-sm font-black text-amber-400 font-mono">{results.wRange}</span>
+      {/* Tipologia Pasta di Riporto */}
+      <div className="bg-white p-6 rounded-2xl border border-stone-100 shadow-sm no-print">
+        <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-tight mb-4 text-center">Tipologia Pasta di Riporto</h3>
+        <div className="flex bg-stone-50 p-1.5 rounded-xl gap-1">
+          {['stanca', 'normale', 'vivace'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setPdrType(type as any)}
+              className={`flex-1 py-2 text-[10px] font-black uppercase rounded-lg transition-all ${pdrType === type ? 'bg-amber-500 text-white shadow-md' : 'text-stone-300'}`}
+            >
+              {type}
+            </button>
+          ))}
         </div>
-        <ResultRow label="Farina" value={results.flour} unit="g" color="bg-white" />
-        <ResultRow label="Acqua" value={results.water} unit="g" color="bg-blue-50" />
-        <div className="grid grid-cols-2 gap-2">
-          <ResultRow label="Sale" value={results.salt} unit="g" color="bg-white" />
-          <ResultRow label="Lievito" value={results.yeast} subValue={results.dryYeast} unit="g" color="bg-amber-50" highlight />
+      </div>
+
+      <div className="pt-8 space-y-4">
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-[10px] font-black text-stone-700 uppercase tracking-tighter">Ricetta Calcolata</h3>
+          <span className="bg-amber-50 text-amber-600 px-2 py-1 rounded text-[9px] font-black uppercase">Pronto per: {res.prontoPer}</span>
+        </div>
+
+        <IngredientRow label={res.cat} value={res.strength} isBlack />
+        
+        <div className="space-y-3">
+          <IngredientRow label="Farina" value={res.flour} unit="g" />
+          <IngredientRow label="Acqua" value={res.water} unit="g" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <IngredientRow label="Sale" value={res.salt} unit="g" />
+            <IngredientRow 
+              label="Lievito Fresco" 
+              value={res.yeast} 
+              unit="g" 
+              subValue={res.dry} 
+              subLabel="o secco" 
+            />
+          </div>
         </div>
       </div>
     </div>
