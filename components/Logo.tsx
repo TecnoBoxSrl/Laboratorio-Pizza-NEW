@@ -13,7 +13,7 @@ export const Logo: React.FC = () => {
         <img 
           // Official La Confraternita Della Pizza Logo (Monk)
           // referrerPolicy="no-referrer" is required to load images from forumfree domains without 403 errors
-          src="https://img.forumfree.net/html/12/1_300_300.jpg" 
+          src="components/logoconf.jpg" 
           alt="La Confraternita Della Pizza Logo" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
