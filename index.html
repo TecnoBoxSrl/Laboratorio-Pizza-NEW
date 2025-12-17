@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Laboratorio Pizza - CalcolaMix & Impasto</title>
-
-    <!-- Se vuoi restare con Tailwind via CDN va bene -->
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <!-- Library for direct PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
       ::-webkit-scrollbar { width: 8px; }
       ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -15,35 +14,33 @@
       ::-webkit-scrollbar-thumb:hover { background: #b45309; }
 
       @media print {
-        body {
-          background: white !important;
-          color: black !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        .fixed, .absolute.inset-0 { display: none !important; }
-        .max-w-lg {
-          max-width: 100% !important;
-          width: 100% !important;
-          box-shadow: none !important;
-          border: none !important;
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        .no-print, button, input[type="checkbox"] { display: none !important; }
-        input {
-          border: none !important;
-          background: transparent !important;
-          padding: 0 !important;
-        }
+        @page { size: A4; margin: 10mm; }
+        body { background: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .no-print, button, .tab-nav, .bg-stone-900\/60, .fixed { display: none !important; }
+        .max-w-lg { max-width: 100% !important; width: 100% !important; box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; }
+        .bg-white\/95 { background: white !important; backdrop-filter: none !important; }
+        input { border: none !important; background: transparent !important; padding: 2px !important; font-weight: bold !important; }
+        /* Ensure everything fits on one page */
+        .animate-fade-in { animation: none !important; }
+        h1, h2, h3 { color: black !important; }
+        .bg-amber-500, .bg-stone-800 { background-color: #f3f4f6 !important; color: black !important; border: 1px solid #ddd !important; }
+        .text-amber-600, .text-amber-400 { color: #b45309 !important; }
       }
-    </style>
-  </head>
 
+      /* PDF Generation specific tweaks to ensure it looks like a document */
+      .pdf-template { background: white !important; padding: 20px !important; color: black !important; }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+</head>
   <body class="bg-gray-50">
     <div id="root"></div>
-
-    <!-- QUESTO È IL PEZZO CHE MANCAVA: avvia React/Vite -->
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
